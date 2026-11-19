@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String             @id @default(uuid())
+  email        String             @unique
+  name         String
+  passwordHash String
+  sessions     InterviewSession[]
+  topics       TopicPerformance[]
+  mistakes     MistakeLog[]
+  createdAt    DateTime           @default(now())
+}
+
+model InterviewSession {
+  id                 String    @id @default(uuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role               String
+  resumeText         String    @db.Text
+  turns              Json      @default("[]")
+  evaluation         Json?
+  status             String    @default("active")
+  score              Float     @default(0)
+  technicalScore     Float     @default(0)
+  communicationScore Float     @default(0)
+  confidence         Float     @default(0)
+  durationSec        Int       @default(0)
+  createdAt          DateTime  @default(now())
+  completedAt        DateTime?
+
+  @@index([userId, createdAt])
+}
+
+model TopicPerformance {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topicName   String
+  proficiency Float    @default(50.0)
+  lastTested  DateTime @updatedAt
+
+  @@unique([userId, topicName])
+}
+
+model MistakeLog {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mistakeDetail String
+  frequency     Int      @default(1)
+  resolved      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId, resolved])
+}
